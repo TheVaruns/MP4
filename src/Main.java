@@ -2,13 +2,16 @@ import java.util.Scanner;
 
 public class Main 
 {
-	private static final String IP_ADDRESS = "172.17.143.177"; 
+	public static final String IP_ADDRESS = "192.168.1.8"; 
 	private static Scanner scanner;
 	private static String resp;
+	public static Gui gui;
 	
 	public static void main(String[] args) 
 	{
-		//	Init scanner
+		gui = new Gui();
+		/*
+			//	Init scanner
 		scanner = new Scanner(System.in);
 		
 		//	Ask server or client?
@@ -16,7 +19,9 @@ public class Main
 		resp = scanner.nextLine();
 		
 		if(resp.equalsIgnoreCase("y"))
+		{
 			new Server();
+		}
 		else 
 		{
 			//	Verify correct IP
@@ -43,6 +48,7 @@ public class Main
 
 
 		scanner.close();
+		*/
 	}
 
 	//	Called by client after connection failure
