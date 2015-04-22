@@ -2,34 +2,65 @@ import java.util.Scanner;
 
 public class Main 
 {
-
+	private static final String IP_ADDRESS = "172.17.143.177"; 
+	private static Scanner scanner;
+	private static String resp;
+	
 	public static void main(String[] args) 
 	{
+		//	Init scanner
+		scanner = new Scanner(System.in);
+		
 		//	Ask server or client?
 		System.out.print("Are you a server? [y/n] ");
-		Scanner scanner = new Scanner(System.in);
+		resp = scanner.nextLine();
 		
-		String resp = scanner.nextLine();
-		
-		//	If server, listen for ready on state manager
 		if(resp.equalsIgnoreCase("y"))
-		{
 			new Server();
-		}
-		else
+		else 
 		{
-			new Client();
+			//	Verify correct IP
+			System.out.print("Is the IP Address: "+ IP_ADDRESS + "? [y/n] ");
+			resp = scanner.nextLine();
+			
+			if(!resp.equalsIgnoreCase("y"))
+			{
+				//	Ask user for IP
+				System.out.print("Enter IP: ");
+				resp = scanner.nextLine();
+			}
+			else resp = IP_ADDRESS;
+			
+			try 
+			{
+				new Client(resp);
+			}
+			catch(Exception e)
+			{
+				tryAgain(resp);
+			}
 		}
-		
-			//	If client, connect to server, and send ready signal.
 
-		
-		//	
+
+		scanner.close();
 	}
 
-	//	Called by server after 
-	public void bootstrap()
+	//	Called by client after connection failure
+	public static void tryAgain(String ip)
 	{
+		System.out.print("Wait for server? ");
+		resp = scanner.nextLine();
 		
+		if(resp.equalsIgnoreCase("y"))
+		{
+			try 
+			{
+				new Client(ip);
+			}
+			catch(Exception e)
+			{
+				tryAgain(ip);
+			}
+		}
 	}
 }
