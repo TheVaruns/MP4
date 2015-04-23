@@ -77,12 +77,8 @@ public class Gui extends JFrame
 		System.out.println("Scale: "+ SCALE);
 		initFrame();
 		initJPanel();
-		try {
-			initComponents();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		initComponents();
 		
 		loadStartScreen();
 	}
@@ -109,7 +105,7 @@ public class Gui extends JFrame
 		
 	}
 
-	private void initComponents() throws ParseException 
+	private void initComponents()
 	{
 		header = new JLabel();
 		header.setText("Let's get started.");
@@ -154,8 +150,7 @@ public class Gui extends JFrame
 		ipLabel.setForeground(IPLABEL_COLOR);
 		ipLabel.setFont(IP_FONT);
 		
-
-		ipField = new JFormattedTextField();//new MaskFormatter("###.##.###.###"));
+		ipField = new JFormattedTextField();
 		ipField.setText(Main.IP_ADDRESS);
 		ipField.setMargin(new Insets(0,15,15,0));
 		ipField.setForeground(IPFIELD_COLOR);

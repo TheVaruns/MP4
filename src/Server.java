@@ -1,7 +1,12 @@
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
@@ -9,18 +14,32 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import javax.swing.Timer;
+
 class Server implements Communicator
 {
+	
+	private String serverIp;
+	private Timer timer;
 	private StateManager stateManager;
 	private TransferManager transferManager;
-	private String serverIp;
+	
+	private ObjectOutputStream outToClient;
+
+	private ActionListener timerListener = new ActionListener(){
+		public void actionPerformed(ActionEvent e) 
+		{
+			sendState();
+		}
+	};
 	
 	
 	public Server()
 	{
 		try 
 		{
-			getIpAddress();
+			initManagers();
+			initTimer();
 			init();
 		}
 		catch(Exception e)
@@ -29,35 +48,12 @@ class Server implements Communicator
 		}
 	}
 	
-	private void getIpAddress()
+	private void initTimer() 
 	{
-		Enumeration e;
-		try {
-			e = NetworkInterface.getNetworkInterfaces();
-			while(e.hasMoreElements())
-			{
-			    NetworkInterface n = (NetworkInterface) e.nextElement();
-			    Enumeration ee = n.getInetAddresses();
-			    while (ee.hasMoreElements())
-			    {
-			        InetAddress i = (InetAddress) ee.nextElement();
-			        if(i.getHostAddress().startsWith("172") || i.getHostAddress().startsWith("127"))
-		        	{
-			        	serverIp = i.getHostAddress();
-						System.out.println("Server IP: " + serverIp);
-						return;
-		        	}
-			    }
-			}
-			
-		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
+		timer = new Timer(Global.TIMER_DELAY, timerListener );
 	}
 	
-	private void initStateManager()
+	private void initManagers()
 	{
 		stateManager= new StateManager(this);
 		transferManager= new TransferManager(this);
@@ -65,41 +61,54 @@ class Server implements Communicator
 	
 	private void init() throws Exception
     {
-		String clientSentence;
-        String capitalizedSentence;
-        ServerSocket welcomeSocket = new ServerSocket(6789);
+		Socket connectionSocket;
+		ObjectInputStream inFromClient;
+        ServerSocket welcomeSocket = new ServerSocket(Global.STATE_PORT);
 
+    	connectionSocket = welcomeSocket.accept();
+       
+    	inFromClient = new ObjectInputStream(connectionSocket.getInputStream());
+    	outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
+        
         while(true)
-        {
-           Socket connectionSocket = welcomeSocket.accept();
-           BufferedReader inFromClient =
-              new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-           DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-           clientSentence = inFromClient.readLine();
-           System.out.println("Received: " + clientSentence);
-           capitalizedSentence = clientSentence.toUpperCase() + '\n';
-           outToClient.writeBytes(capitalizedSentence);
+        {	
+        	stateManager.updateRemoteState((StateInfo)inFromClient.readObject());
+           
+        	int remoteJobs = stateManager.getRemoteState().getPendingJobs();
+        	System.out.println("Client Jobs: " + remoteJobs);
+        	stateManager.getLocalState().setPendingJobs(1000-remoteJobs);
+
+        	System.out.println("My Jobs: " + stateManager.getLocalState().getPendingJobs());
+           
+        	if(!timer.isRunning()) timer.start();
         }
      }
 
-	@Override
-	public void send(StateInfo info) {
+	public void sendState() 
+	{
+		//	Put local state on state port
+		try {
+			outToClient.writeObject(stateManager.getLocalState());
+			outToClient.reset();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
+		
 	}
 
-	@Override
-	public void send(TransferInfo info) {
+	public void sendTransfer() 
+	{
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public void requestState() {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public void requestTransfer() {
 		// TODO Auto-generated method stub
 		

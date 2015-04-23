@@ -1,33 +1,83 @@
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
 
-class Client
+import javax.swing.Timer;
+
+class Client implements Communicator//CLOSE YOUR SOCKET
 {
+	private StateManager stateManager;
+	private TransferManager transferManager;
+	
+	private ObjectOutputStream outToServer;
+	
 	public Client(String ip) throws Exception
 	{
+		initManagers();
 		init(ip);
 	}
 	
-	 public void init(String ip) throws Exception
-	 {
-		 String sentence;
-		 String modifiedSentence;
+	private void initManagers()
+	{
+		stateManager= new StateManager(this);
+		transferManager= new TransferManager(this);
+	}
+	
+	public void init(String ip) throws Exception
+	{	 
+		 Socket clientSocket = new Socket(ip, Global.STATE_PORT);
 		 
-		 Socket clientSocket = new Socket(ip, 6789);
-		 
-		 DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-		 
-		 System.out.print("Enter something: ");
-		 BufferedReader inFromUser = new BufferedReader( 
-				 new InputStreamReader(System.in));
-		 
-		 BufferedReader inFromServer = new BufferedReader(
-				 new InputStreamReader(clientSocket.getInputStream()));
-		 
-		 sentence = inFromUser.readLine();
-		 outToServer.writeBytes(sentence + '\n');
-		 modifiedSentence = inFromServer.readLine();
-		 System.out.println("FROM SERVER: " + modifiedSentence);
-		 clientSocket.close();
+		 outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
+		 ObjectInputStream inFromServer = new ObjectInputStream(clientSocket.getInputStream());
+
+     	System.out.println("Waiting on server...");
+		 while(true)
+		 {		 
+			 sendState();
+			 stateManager.updateRemoteState((StateInfo)inFromServer.readObject());
+
+			 System.out.println("Server Jobs: " + stateManager.getRemoteState().getPendingJobs());
+		 }
 	 }
+	 
+	 
+	public void sendState() 
+	{
+		//	Put local state on state port
+		try {
+
+			StateInfo local = stateManager.getLocalState();
+			if(local.getPendingJobs() > 0)
+				local.setPendingJobs(local.getPendingJobs()-1);
+			
+			System.out.println("My jobs: " + stateManager.getLocalState().getPendingJobs());			
+			
+			outToServer.writeObject(stateManager.getLocalState());
+			outToServer.reset();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+	}
+
+	@Override
+	public void sendTransfer() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void requestState() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void requestTransfer() {
+		// TODO Auto-generated method stub
+		
+	}
 }
