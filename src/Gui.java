@@ -74,7 +74,6 @@ public class Gui extends JFrame
 	
 	public Gui()
 	{
-		System.out.println("Scale: "+ SCALE);
 		initFrame();
 		initJPanel();
 		
@@ -151,7 +150,7 @@ public class Gui extends JFrame
 		ipLabel.setFont(IP_FONT);
 		
 		ipField = new JFormattedTextField();
-		ipField.setText(Main.IP_ADDRESS);
+		ipField.setText(Global.IP_ADDRESS);
 		ipField.setMargin(new Insets(0,15,15,0));
 		ipField.setForeground(IPFIELD_COLOR);
 		ipField.setBackground(IPFIELD_BG);

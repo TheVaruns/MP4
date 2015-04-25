@@ -20,7 +20,8 @@ class Server implements Communicator
 {
 	private StateManager stateManager;
 	private TransferManager transferManager;
-	
+	private HardwareMonitor hardwareMonitor;
+
 	private ObjectOutputStream outToState, outToTransfer;
 
 	
@@ -43,6 +44,7 @@ class Server implements Communicator
 	{
 		stateManager= new StateManager(this);
 		transferManager= new TransferManager(this);
+		hardwareMonitor = new HardwareMonitor(); 
 	}
 	
 	private void init() throws Exception
@@ -64,6 +66,8 @@ class Server implements Communicator
     	inFromTransfer = new ObjectInputStream(transferSocket.getInputStream());
     	outToTransfer = new ObjectOutputStream(transferSocket.getOutputStream());
         
+    	Thread thread = null;
+    	
     	//	Loop indefinitely
         while(true)
         {	
@@ -104,8 +108,33 @@ class Server implements Communicator
         		
         		break;
         	case Global.STATE_WORKING:
-        		return;		//	DELETE ME
-        		//break;
+        		
+				//	Do new work if first job or old job hasn't finished
+        		if(thread == null || !(thread.isAlive()))
+        		{
+        			if(!transferManager.isEmptyJobQueue())
+        			{
+		        		WorkerThread workerThread = 
+		        				new WorkerThread(transferManager, transferManager.getJob(),
+		        									hardwareMonitor.getThrottle());
+		        		thread = new Thread(workerThread);
+		        		thread.start();
+		        		
+		        		//	Make sure to update number of jobs in queue.
+		        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
+        			}
+        			else	//	REVISE ME
+        			{
+            			stateManager.setState(Global.STATE_AGGREGATING);
+            			System.out.println("Num jobs: " + stateManager.getLocalState().getJobs());
+        			}
+        		}
+        		
+        		//	Exchange state information
+        		//sendState();
+        		//stateManager.updateRemoteState((StateInfo)inFromState.readObject());
+        		
+        		break;
         	case Global.STATE_AGGREGATING:
         		
         		

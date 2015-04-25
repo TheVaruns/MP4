@@ -26,4 +26,8 @@ public class Job implements Serializable
 	{
 		return id;
 	}
+
+	public void setData(int i, double d) {
+		data[i] = d;
+	}
 }

@@ -5,10 +5,13 @@ public class Global
 								PORT_STATE = 4321,
 								PORT_TRANSFER = 8765,
 								
-								DEFAULT_THROTTLE = 100,
+								DEFAULT_THROTTLE = 5,
 								
 								JOB_SIZE = 1,
 								INIT_JOBS = 1000;
+	
+
+	public static final String IP_ADDRESS = "localhost"; 
 	
 
 	//	STATES
@@ -21,14 +24,21 @@ public class Global
 								STATE_WORKING = 2,		//	SERVER: PROCESSING JOBS
 														//	CLIENT: PROCESSING JOBS
 								
-								STATE_AGGREGATING = 4,	//	SERVER: SENDING DATA
+								STATE_AGGREGATING = 3,	//	SERVER: SENDING DATA
 														//	CLIENT: READY FOR DATA
 	
-								STATE_DONE = 5;			//	SERVER: DATA SENT, JOB DONE
+								STATE_DONE = 4;			//	SERVER: DATA SENT, JOB DONE
 														//	CLIENT: DATA COLLECTED, JOB DONE.
 	
 	public static final String[] STATES = {"WAITING", "BOOTSTRAPPING", 
 											"WORKING", "AGGREGATING", "DONE" };
+
+	
+	
+	public static final int LOOP_SIZE = 1000;
+
+
+	public static final int JOB_DIFFERENCE = 0;
 								
 							
 }

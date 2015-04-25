@@ -9,8 +9,10 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 {
 	private StateManager stateManager;
 	private TransferManager transferManager;
+	private HardwareMonitor hardwareMonitor;
 	
 	private ObjectOutputStream outToState, outToTransfer;
+
 	
 	public Client(String ip) throws Exception
 	{
@@ -21,14 +23,16 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 	
 	private void initManagers()
 	{
-		stateManager= new StateManager(this);
-		transferManager= new TransferManager(this);
+		stateManager = new StateManager(this);
+		transferManager = new TransferManager(this);
+		hardwareMonitor = new HardwareMonitor(); 
 	}
 	
 	private void initJobs()
 	{
 		for(int i = 0; i < Global.INIT_JOBS; i++)
 		{
+			
 			double[] data = new double[Global.JOB_SIZE];
 			
 			for(int j = 0; j < Global.JOB_SIZE; j++)
@@ -50,6 +54,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 		ObjectInputStream inFromTransfer = new ObjectInputStream(transferSocket.getInputStream());
 		
 		int transferredJobs = 0;
+		Thread thread = null;
 		
 		while(true)
 		{		 
@@ -92,12 +97,37 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         		
         		break;
         	case Global.STATE_WORKING:
-        		return;		//	DELETE ME
-        		//break;
-        	case Global.STATE_AGGREGATING:
         		
+        		//	Do new work if first job or old job hasn't finished
+        		if(thread == null || !(thread.isAlive()))
+        		{
+        			if(!transferManager.isEmptyJobQueue())
+        			{
+		        		WorkerThread workerThread = 
+		        				new WorkerThread(transferManager, transferManager.getJob(),
+		        									100);
+		        		thread = new Thread(workerThread);
+		        		thread.start();
+		        		
+		        		//	Make sure to update number of jobs in queue.
+		        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
+        			}
+        			else	//	REVISE ME
+        			{
+            			stateManager.setState(Global.STATE_AGGREGATING);
+            			System.out.println("Num jobs: " + stateManager.getLocalState().getJobs());
+        			}
+        		}
+        		
+        		//	Exchange state information
+        		//sendState();
+        		//stateManager.updateRemoteState((StateInfo)inFromState.readObject());
         		
         		break;
+        	case Global.STATE_AGGREGATING:
+        		return;
+        		
+        		//break;
         	case Global.STATE_DONE:
         		System.out.println("Server: Job complete!");
         		return;

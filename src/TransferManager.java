@@ -33,6 +33,11 @@ public class TransferManager
 	{
 		jobQueue.add(job);
 	}
+	
+	public Job getJob()
+	{
+		return jobQueue.remove();
+	}
 		
 	public boolean isEmptyJobQueue()
 	{
@@ -61,7 +66,7 @@ public class TransferManager
 	{
 		return finishedQueue.isEmpty();
 	}
-	
+
 	
 	public void sendNull()
 	{
