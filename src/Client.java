@@ -10,11 +10,12 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 	private StateManager stateManager;
 	private TransferManager transferManager;
 	
-	private ObjectOutputStream outToServer;
+	private ObjectOutputStream outToState, outToTransfer;
 	
 	public Client(String ip) throws Exception
 	{
 		initManagers();
+		initJobs();
 		init(ip);
 	}
 	
@@ -24,60 +25,122 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 		transferManager= new TransferManager(this);
 	}
 	
+	private void initJobs()
+	{
+		for(int i = 0; i < Global.INIT_JOBS; i++)
+		{
+			double[] data = new double[Global.JOB_SIZE];
+			
+			for(int j = 0; j < Global.JOB_SIZE; j++)
+				data[j] = 1.111111;
+				
+			transferManager.addJob(new Job(i, data));
+		}
+	}
+	
 	public void init(String ip) throws Exception
 	{	 
-		 Socket clientSocket = new Socket(ip, Global.STATE_PORT);
-		 
-		 outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
-		 ObjectInputStream inFromServer = new ObjectInputStream(clientSocket.getInputStream());
+		Socket stateSocket = new Socket(ip, Global.PORT_STATE);
+		Socket transferSocket = new Socket(ip, Global.PORT_TRANSFER);
 
-     	System.out.println("Waiting on server...");
-		 while(true)
-		 {		 
-			 sendState();
-			 stateManager.updateRemoteState((StateInfo)inFromServer.readObject());
+		outToState = new ObjectOutputStream(stateSocket.getOutputStream());
+		outToTransfer = new ObjectOutputStream(transferSocket.getOutputStream());
+		
+		ObjectInputStream inFromState = new ObjectInputStream(stateSocket.getInputStream());
+		ObjectInputStream inFromTransfer = new ObjectInputStream(transferSocket.getInputStream());
+		
+		int transferredJobs = 0;
+		
+		while(true)
+		{		 
+			int currentState = stateManager.getState();
+	       	
+        	switch(currentState)
+        	{
+        	case Global.STATE_WAITING:
+        		
+        		//	Listen for bootstrap state for server.
+        		stateManager.updateRemoteState((StateInfo)inFromState.readObject());
+        		
+        		//	If server is ready for bootstrap, begin bootstrapping
+        		if(stateManager.getRemoteState().getState() == Global.STATE_BOOTSTRAPPING)
+        			stateManager.setState(Global.STATE_BOOTSTRAPPING);
+        		
+        		break;
+        	case Global.STATE_BOOTSTRAPPING:
+        		
+        		
+        		//	Send job
+        		if(transferredJobs < Global.INIT_JOBS/2)
+        		{
+        			transferredJobs++;
+        			transferManager.transferJob();
+        		}
+        		else
+        		{
+        			transferManager.sendNull();
+        		}
+        		
+        		//	Wait for response
+        		stateManager.updateRemoteState((StateInfo)inFromState.readObject());
 
-			 System.out.println("Server Jobs: " + stateManager.getRemoteState().getPendingJobs());
+        		System.out.println("Server State: " + stateManager.getRemoteState().getJobs());
+
+        		//	If server is ready for bootstrap, begin bootstrapping
+        		if(stateManager.getRemoteState().getState() == Global.STATE_WORKING)
+        			stateManager.setState(Global.STATE_WORKING);
+        		
+        		break;
+        	case Global.STATE_WORKING:
+        		return;		//	DELETE ME
+        		//break;
+        	case Global.STATE_AGGREGATING:
+        		
+        		
+        		break;
+        	case Global.STATE_DONE:
+        		System.out.println("Server: Job complete!");
+        		return;
+        		
+        	default:
+        		System.out.println("Server: State is invalid.");
+        		return;
+        	}
+        	
+        	//	Update state on change
+        	int newState = stateManager.getState();
+        	
+        	if(newState != currentState)
+        		System.out.println(Global.STATES[currentState] + " -> " + Global.STATES[newState]);
+        	
 		 }
 	 }
 	 
 	 
 	public void sendState() 
 	{
-		//	Put local state on state port
 		try {
-
 			StateInfo local = stateManager.getLocalState();
-			if(local.getPendingJobs() > 0)
-				local.setPendingJobs(local.getPendingJobs()-1);
-			
-			System.out.println("My jobs: " + stateManager.getLocalState().getPendingJobs());			
-			
-			outToServer.writeObject(stateManager.getLocalState());
-			outToServer.reset();
+			if(local.getJobs() > 0)
+				local.setJobs(local.getJobs()-1);
+						
+			outToState.writeObject(stateManager.getLocalState());
+			outToState.reset();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Could not send state.");
 		}
 
 		
 	}
 
-	@Override
-	public void sendTransfer() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void requestState() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void requestTransfer() {
-		// TODO Auto-generated method stub
-		
+	public void sendTransfer(Job job) 
+	{
+		try {
+			outToTransfer.writeObject(job);
+			outToTransfer.reset();
+		}
+		catch(Exception e){
+			System.out.println("Could not send job.");
+		}
 	}
 }

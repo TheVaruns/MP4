@@ -1,9 +1,6 @@
 /*
  * 	STATE MANAGER
  * 
- * 		- Reads remote machine state.
- * 		- Stores local machine state.
- * 		- 
  */
 
 public class StateManager 
@@ -36,6 +33,7 @@ public class StateManager
 		remote = state;
 	}
 	
+	
 	public StateInfo getLocalState()
 	{
 		return local;
@@ -44,6 +42,20 @@ public class StateManager
 	public StateInfo getRemoteState()
 	{
 		return remote;
+	}
+	
+
+	public int getState()
+	{
+		return local.getState();
+	}
+	
+	public void setState(int state)
+	{
+		local.setState(state);
+		
+		//	Whenever a state is updated, let the remote system know.
+		communicator.sendState();
 	}
 	
 	

@@ -18,20 +18,11 @@ import javax.swing.Timer;
 
 class Server implements Communicator
 {
-	
-	private String serverIp;
-	private Timer timer;
 	private StateManager stateManager;
 	private TransferManager transferManager;
 	
-	private ObjectOutputStream outToClient;
+	private ObjectOutputStream outToState, outToTransfer;
 
-	private ActionListener timerListener = new ActionListener(){
-		public void actionPerformed(ActionEvent e) 
-		{
-			sendState();
-		}
-	};
 	
 	
 	public Server()
@@ -39,7 +30,6 @@ class Server implements Communicator
 		try 
 		{
 			initManagers();
-			initTimer();
 			init();
 		}
 		catch(Exception e)
@@ -47,11 +37,7 @@ class Server implements Communicator
 			System.out.println("Server: " + e);
 		}
 	}
-	
-	private void initTimer() 
-	{
-		timer = new Timer(Global.TIMER_DELAY, timerListener );
-	}
+
 	
 	private void initManagers()
 	{
@@ -61,56 +47,98 @@ class Server implements Communicator
 	
 	private void init() throws Exception
     {
-		Socket connectionSocket;
-		ObjectInputStream inFromClient;
-        ServerSocket welcomeSocket = new ServerSocket(Global.STATE_PORT);
+		Socket stateSocket, transferSocket;
+		ObjectInputStream inFromState, inFromTransfer;
+		ServerSocket stateServerSocket = new ServerSocket(Global.PORT_STATE);
+		ServerSocket transferServerSocket = new ServerSocket(Global.PORT_TRANSFER);
 
-    	connectionSocket = welcomeSocket.accept();
-       
-    	inFromClient = new ObjectInputStream(connectionSocket.getInputStream());
-    	outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
+		//	Waits until a client connects
+		stateSocket = stateServerSocket.accept();
+		transferSocket = transferServerSocket.accept();
+
+		//	Initializes streams for client input
+    	inFromState = new ObjectInputStream(stateSocket.getInputStream());
+    	outToState = new ObjectOutputStream(stateSocket.getOutputStream());
+
+    	//	Initializes streams for server output
+    	inFromTransfer = new ObjectInputStream(transferSocket.getInputStream());
+    	outToTransfer = new ObjectOutputStream(transferSocket.getOutputStream());
         
+    	//	Loop indefinitely
         while(true)
         {	
-        	stateManager.updateRemoteState((StateInfo)inFromClient.readObject());
-           
-        	int remoteJobs = stateManager.getRemoteState().getPendingJobs();
-        	System.out.println("Client Jobs: " + remoteJobs);
-        	stateManager.getLocalState().setPendingJobs(1000-remoteJobs);
-
-        	System.out.println("My Jobs: " + stateManager.getLocalState().getPendingJobs());
-           
-        	if(!timer.isRunning()) timer.start();
+        	int currentState = stateManager.getState();
+        	
+        	switch(currentState)
+        	{
+        	case Global.STATE_WAITING:
+        		
+        		//	Let client know server is ready to bootstrap
+        		stateManager.setState(Global.STATE_BOOTSTRAPPING);
+        		this.sendState();
+        		
+        		break;
+        	case Global.STATE_BOOTSTRAPPING:
+        		
+        		//	Listen for new job
+        		Job job = (Job)inFromTransfer.readObject();
+        		
+        		//	If client bootstrapping phase is done
+        		if(job == null)
+        		{
+        			//	Move to working state
+        			stateManager.setState(Global.STATE_WORKING);
+        		}
+        		else
+        		{
+        			//	Add job to queue
+        			System.out.println("Job received: [" + job.getId() + ", " + job.getData(0) + "]");
+        			
+        			
+        			transferManager.addJob(job);
+	        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
+	        		
+	        		//	Let client know job was received.
+	        		this.sendState();
+        		}
+        		
+        		break;
+        	case Global.STATE_WORKING:
+        		return;		//	DELETE ME
+        		//break;
+        	case Global.STATE_AGGREGATING:
+        		
+        		
+        		break;
+        	case Global.STATE_DONE:
+        		System.out.println("Server: Job complete!");
+        		return;
+        		
+        	default:
+        		System.out.println("Server: State is invalid.");
+        		return;
+        	}
+        	
+        	int newState = stateManager.getState();
+        	
+        	if(newState != currentState)
+        		System.out.println(Global.STATES[currentState] + " -> " + Global.STATES[newState]);
+        	
         }
      }
 
 	public void sendState() 
 	{
-		//	Put local state on state port
 		try {
-			outToClient.writeObject(stateManager.getLocalState());
-			outToClient.reset();
+			outToState.writeObject(stateManager.getLocalState());
+			outToState.reset();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Could not send state.");
 		}
-
-		
 	}
 
-	public void sendTransfer() 
+	public void sendTransfer(Job job) 
 	{
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void requestState() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void requestTransfer() {
-		// TODO Auto-generated method stub
 		
 	}
 }
