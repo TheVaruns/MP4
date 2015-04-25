@@ -20,7 +20,6 @@ class Server implements Communicator
 {
 	private StateManager stateManager;
 	private TransferManager transferManager;
-	private HardwareMonitor hardwareMonitor;
 
 	private ObjectOutputStream outToState, outToTransfer;
 
@@ -44,7 +43,7 @@ class Server implements Communicator
 	{
 		stateManager= new StateManager(this);
 		transferManager= new TransferManager(this);
-		hardwareMonitor = new HardwareMonitor(); 
+		Global.hardwareMonitor = new HardwareMonitor(); 
 	}
 	
 	private void init() throws Exception
@@ -116,7 +115,7 @@ class Server implements Communicator
         			{
 		        		WorkerThread workerThread = 
 		        				new WorkerThread(transferManager, transferManager.getJob(),
-		        									hardwareMonitor.getThrottle());
+		        									Global.hardwareMonitor.getThrottle());
 		        		thread = new Thread(workerThread);
 		        		thread.start();
 		        		

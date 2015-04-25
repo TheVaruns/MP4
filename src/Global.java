@@ -39,6 +39,8 @@ public class Global
 
 
 	public static final int JOB_DIFFERENCE = 0;
+	
+	public static HardwareMonitor hardwareMonitor;
 								
 							
 }

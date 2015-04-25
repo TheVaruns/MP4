@@ -5,8 +5,9 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
-import java.text.ParseException;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -14,6 +15,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 
 public class Gui extends JFrame 
@@ -68,6 +70,12 @@ public class Gui extends JFrame
 	
 	private static final Font 	IP_FONT = new Font("Arial", Font.BOLD, SCALE*10);
 	
+	private JTextField			throttleField;
+	private static final int	THROTTLE_WIDTH = 6, THROTTLE_HEIGHT = 1,
+								THROTTLE_X = 9, THROTTLE_Y = 8;
+	
+	private static final Font 	THROTTLE_FONT = new Font("Arial", Font.BOLD, SCALE*10);
+	
 	//	Threading
 	private CommThread thread;
 	
@@ -85,9 +93,9 @@ public class Gui extends JFrame
 	private void initFrame()
 	{
 		this.setTitle("MP4: Dynamic Balance Loader");
-		this.setResizable(true);
-		this.setUndecorated(true);
-		this.setBounds(FRAME_X, FRAME_Y, FRAME_WIDTH, FRAME_HEIGHT);
+		this.setResizable(false);
+		this.setUndecorated(false);
+		this.setBounds(FRAME_X, FRAME_Y, FRAME_WIDTH, FRAME_HEIGHT+SCALE*25);
 		
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setVisible(true);
@@ -151,7 +159,7 @@ public class Gui extends JFrame
 		
 		ipField = new JFormattedTextField();
 		ipField.setText(Global.IP_ADDRESS);
-		ipField.setMargin(new Insets(0,15,15,0));
+		ipField.setMargin(new Insets(15,15,15,0));
 		ipField.setForeground(IPFIELD_COLOR);
 		ipField.setBackground(IPFIELD_BG);
 		ipField.setFont(IP_FONT);
@@ -166,6 +174,32 @@ public class Gui extends JFrame
 		buttonRight.setBorderPainted(false);
 		buttonRight.addActionListener(buttonListener);
 		buttonRight.addMouseListener(mouseAdaptor);
+		
+		throttleField = new JTextField();
+		throttleField.setText(""+Global.DEFAULT_THROTTLE);
+		throttleField.setMargin(new Insets(15,15,15,0));
+		throttleField.setForeground(Color.BLACK);
+		throttleField.setBackground(Color.WHITE);
+		throttleField.setFont(THROTTLE_FONT);
+		throttleField.addKeyListener(new KeyListener(){
+
+			@Override
+			public void keyTyped(KeyEvent e) {}
+
+			@Override
+			public void keyPressed(KeyEvent e) {}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				int key = e.getKeyCode();
+				
+				if(key == KeyEvent.VK_ENTER)
+					Global.hardwareMonitor.setThrottle(Integer.parseInt(throttleField.getText()));
+			}
+			
+		});
+		throttleField.setVisible(true);
+		
 	}
 	
 	private void loadStartScreen()
@@ -198,7 +232,9 @@ public class Gui extends JFrame
 		}
 		
 		panel.add(header);
+		panel.add(throttleField);
 		set(header, HEADER_X, HEADER_Y, HEADER_WIDTH, HEADER_HEIGHT);
+		set(throttleField, THROTTLE_X, THROTTLE_Y, THROTTLE_WIDTH, THROTTLE_HEIGHT);
 		
 		(new Thread(thread)).start();
 	}
@@ -260,8 +296,8 @@ public class Gui extends JFrame
 	{
 		panel.removeAll();
 		panel.repaint();
-		panel.add(buttonQuit);
-		set(buttonQuit, 15, 0, 1, 1);
+		//panel.add(buttonQuit);
+		//set(buttonQuit, 15, 0, 1, 1);
 	}
 
 	private void set(JComponent comp,int x,int y, int w, int h)

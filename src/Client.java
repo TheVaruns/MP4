@@ -9,7 +9,6 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 {
 	private StateManager stateManager;
 	private TransferManager transferManager;
-	private HardwareMonitor hardwareMonitor;
 	
 	private ObjectOutputStream outToState, outToTransfer;
 
@@ -25,7 +24,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 	{
 		stateManager = new StateManager(this);
 		transferManager = new TransferManager(this);
-		hardwareMonitor = new HardwareMonitor(); 
+		Global.hardwareMonitor = new HardwareMonitor(); 
 	}
 	
 	private void initJobs()
@@ -105,7 +104,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         			{
 		        		WorkerThread workerThread = 
 		        				new WorkerThread(transferManager, transferManager.getJob(),
-		        									100);
+		        									Global.hardwareMonitor.getThrottle());
 		        		thread = new Thread(workerThread);
 		        		thread.start();
 		        		
