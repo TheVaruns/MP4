@@ -54,6 +54,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 		
 		int transferredJobs = 0;
 		Thread thread = null;
+		int time = 0;
 		
 		while(true)
 		{		 
@@ -92,7 +93,10 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 
         		//	If server is ready for bootstrap, begin bootstrapping
         		if(stateManager.getRemoteState().getState() == Global.STATE_WORKING)
+        		{
+        			time = (int) System.currentTimeMillis();
         			stateManager.setState(Global.STATE_WORKING);
+        		}
         		
         		break;
         	case Global.STATE_WORKING:
@@ -114,7 +118,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         			else	//	REVISE ME
         			{
             			stateManager.setState(Global.STATE_AGGREGATING);
-            			System.out.println("Num jobs: " + stateManager.getLocalState().getJobs());
+            			System.out.println("Time: " + (int)(System.currentTimeMillis()-time) + " ms");
         			}
         		}
         		

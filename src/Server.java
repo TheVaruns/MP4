@@ -66,6 +66,7 @@ class Server implements Communicator
     	outToTransfer = new ObjectOutputStream(transferSocket.getOutputStream());
         
     	Thread thread = null;
+    	int time = 0;
     	
     	//	Loop indefinitely
         while(true)
@@ -91,6 +92,7 @@ class Server implements Communicator
         		{
         			//	Move to working state
         			stateManager.setState(Global.STATE_WORKING);
+        			time = (int) System.currentTimeMillis();
         		}
         		else
         		{
@@ -125,7 +127,7 @@ class Server implements Communicator
         			else	//	REVISE ME
         			{
             			stateManager.setState(Global.STATE_AGGREGATING);
-            			System.out.println("Num jobs: " + stateManager.getLocalState().getJobs());
+            			System.out.println("Time: " + (int)(System.currentTimeMillis()-time) + " ms");
         			}
         		}
         		

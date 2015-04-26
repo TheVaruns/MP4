@@ -15,40 +15,34 @@ public class WorkerThread implements Runnable
 	public void run() 
 	{
 		long startTime = System.nanoTime();
-		long runTime = 0, sleepTime = 0;
+		long workTime = 0;
 		
 		for(int i = 0; i < Global.JOB_SIZE; i++)
 		{
-			
 			for(int j = 0; j < Global.LOOP_SIZE; j++)
 			{
-				runTime = System.nanoTime()-startTime;
-				
-				if(runTime > throttle)
-				{
-					//Sleep
-					try {
-						Thread.sleep(0, 100-throttle);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					
-					//	Amount of sleep time
-					sleepTime = System.nanoTime()-startTime-runTime;
-					
-					//System.out.println("["+runTime+", "+sleepTime+"]");
-					
-					startTime = System.nanoTime();
-					runTime = 0;
-					startTime = 0;
-				}
 				job.setData(i, job.getData(i) + 1.111111);
 			}
 		}
 		
+		workTime = System.nanoTime() - startTime;
+		int workTimeMs = (int) (workTime/1000000);
+		int workTimeNs = (int) (workTime%1000000);
+		
+		double factor = (100 / (double)throttle) - 1;
+		
+		int sleepTimeMs = (int) (workTimeMs*factor);
+		int sleepTimeNs = (int) (workTimeMs*factor);
+		
+		try {
+			Thread.sleep(sleepTimeMs, sleepTimeNs);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		tm.addFinishedJob(job);
 		
-		System.out.println("Job " + job.getId() + " finished with value: " + job.getData(0));
+		System.out.println("Job " + job.getId() + " finished in: " + workTime);
 	}
 
 }

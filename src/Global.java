@@ -5,13 +5,13 @@ public class Global
 								PORT_STATE = 4321,
 								PORT_TRANSFER = 8765,
 								
-								DEFAULT_THROTTLE = 5,
+								DEFAULT_THROTTLE = 50,
 								
-								JOB_SIZE = 1,
+								JOB_SIZE = 50,
 								INIT_JOBS = 1000;
 	
 
-	public static final String IP_ADDRESS = "localhost"; 
+	public static final String 	IP_ADDRESS = "localhost"; 
 	
 
 	//	STATES
@@ -35,10 +35,13 @@ public class Global
 
 	
 	
-	public static final int LOOP_SIZE = 1000;
+	public static final int LOOP_SIZE = 2000;
 
 
 	public static final int JOB_DIFFERENCE = 0;
+
+
+	public static final int THRESHOLD_FACTOR = 100;
 	
 	public static HardwareMonitor hardwareMonitor;
 								
