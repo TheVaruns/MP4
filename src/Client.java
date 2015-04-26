@@ -1,30 +1,15 @@
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.*;
-import java.net.*;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
-import javax.swing.Timer;
-
-class Client implements Communicator//CLOSE YOUR SOCKET
+class Client extends Communicator//CLOSE YOUR SOCKET - NO
 {
-	private StateManager stateManager;
-	private TransferManager transferManager;
-	
-	private ObjectOutputStream outToState, outToTransfer;
-
 	
 	public Client(String ip) throws Exception
 	{
 		initManagers();
 		initJobs();
 		init(ip);
-	}
-	
-	private void initManagers()
-	{
-		stateManager = new StateManager(this);
-		transferManager = new TransferManager(this);
-		Global.hardwareMonitor = new HardwareMonitor(); 
 	}
 	
 	private void initJobs()
@@ -42,13 +27,14 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 	
 	public void init(String ip) throws Exception
 	{	 
-		Socket stateSocket = new Socket(ip, Global.PORT_STATE);
+		Socket stcSocket = new Socket(ip, Global.PORT_STC);
+		Socket ctsSocket = new Socket(ip, Global.PORT_CTS);
 		Socket transferSocket = new Socket(ip, Global.PORT_TRANSFER);
 
-		outToState = new ObjectOutputStream(stateSocket.getOutputStream());
+		outToServer = new ObjectOutputStream(ctsSocket.getOutputStream());
 		outToTransfer = new ObjectOutputStream(transferSocket.getOutputStream());
 		
-		ObjectInputStream inFromState = new ObjectInputStream(stateSocket.getInputStream());
+		ObjectInputStream inFromServer = new ObjectInputStream(stcSocket.getInputStream());
 		ObjectInputStream inFromTransfer = new ObjectInputStream(transferSocket.getInputStream());
 		
 		int transferredJobs = 0;
@@ -64,7 +50,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         	case Global.STATE_WAITING:
         		
         		//	Listen for bootstrap state for server.
-        		stateManager.updateRemoteState((StateInfo)inFromState.readObject());
+        		stateManager.updateRemoteState((StateInfo)inFromServer.readObject());
         		
         		//	If server is ready for bootstrap, begin bootstrapping
         		if(stateManager.getRemoteState().getState() == Global.STATE_BOOTSTRAPPING)
@@ -73,12 +59,12 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         		break;
         	case Global.STATE_BOOTSTRAPPING:
         		
-        		
         		//	Send job
         		if(transferredJobs < Global.INIT_JOBS/2)
         		{
         			transferredJobs++;
         			transferManager.transferJob();
+        			stateManager.getLocalState().setJobs(transferManager.getNumJobs());
         		}
         		else
         		{
@@ -86,13 +72,14 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         		}
         		
         		//	Wait for response
-        		stateManager.updateRemoteState((StateInfo)inFromState.readObject());
+        		stateManager.updateRemoteState((StateInfo)inFromServer.readObject());
 
         		System.out.println("Server State: " + stateManager.getRemoteState().getJobs());
 
         		//	If server is ready for bootstrap, begin bootstrapping
         		if(stateManager.getRemoteState().getState() == Global.STATE_WORKING)
         		{
+        			calculateJobTime();
         			time = (int) System.currentTimeMillis();
         			stateManager.setState(Global.STATE_WORKING);
         		}
@@ -100,30 +87,7 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         		break;
         	case Global.STATE_WORKING:
         		
-        		//	Do new work if first job or old job hasn't finished
-        		if(thread == null || !(thread.isAlive()))
-        		{
-        			if(!transferManager.isEmptyJobQueue())
-        			{
-		        		WorkerThread workerThread = 
-		        				new WorkerThread(transferManager, transferManager.getJob(),
-		        									Global.hardwareMonitor.getThrottle());
-		        		thread = new Thread(workerThread);
-		        		thread.start();
-		        		
-		        		//	Make sure to update number of jobs in queue.
-		        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
-        			}
-        			else	//	REVISE ME
-        			{
-            			stateManager.setState(Global.STATE_AGGREGATING);
-            			System.out.println("Time: " + (int)(System.currentTimeMillis()-time) + " ms");
-        			}
-        		}
-        		
-        		//	Exchange state information
-        		//sendState();
-        		//stateManager.updateRemoteState((StateInfo)inFromState.readObject());
+        		doWork(thread, inFromServer, inFromTransfer, time, false);
         		
         		break;
         	case Global.STATE_AGGREGATING:
@@ -139,40 +103,8 @@ class Client implements Communicator//CLOSE YOUR SOCKET
         		return;
         	}
         	
-        	//	Update state on change
-        	int newState = stateManager.getState();
-        	
-        	if(newState != currentState)
-        		System.out.println(Global.STATES[currentState] + " -> " + Global.STATES[newState]);
+        	printIfStateChange(currentState);
         	
 		 }
 	 }
-	 
-	 
-	public void sendState() 
-	{
-		try {
-			StateInfo local = stateManager.getLocalState();
-			if(local.getJobs() > 0)
-				local.setJobs(local.getJobs()-1);
-						
-			outToState.writeObject(stateManager.getLocalState());
-			outToState.reset();
-		} catch (IOException e) {
-			System.out.println("Could not send state.");
-		}
-
-		
-	}
-
-	public void sendTransfer(Job job) 
-	{
-		try {
-			outToTransfer.writeObject(job);
-			outToTransfer.reset();
-		}
-		catch(Exception e){
-			System.out.println("Could not send job.");
-		}
-	}
 }

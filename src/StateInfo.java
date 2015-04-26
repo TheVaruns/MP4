@@ -4,12 +4,22 @@ import java.util.ArrayList;
 
 public class StateInfo implements Serializable 
 {
-	
+
 	private int pendingJobs;
-	private int throttlePercentage;
+	private int jobTime;
+	private int throttle;
 	private int state;
 	private int cpuUtilization;
 	
+	
+	public void printStateInfo(){
+		System.out.println("State info:");
+		System.out.println("  Pending jobs: " + pendingJobs);
+		System.out.println("  Job time: " + jobTime);
+		System.out.println("  Throttle: " + throttle);
+		System.out.println("  State: " + Global.STATES[state]);
+		System.out.println("  CPU Utilization: " + cpuUtilization + "\n");
+	}
 	
 	public StateInfo(boolean server)
 	{
@@ -21,17 +31,19 @@ public class StateInfo implements Serializable
 	private void initServerState()
 	{
 		state = Global.STATE_WAITING;
-		throttlePercentage = Global.DEFAULT_THROTTLE;
+		throttle = Global.DEFAULT_THROTTLE;
 		pendingJobs = 0;
 		cpuUtilization = 0;
+		jobTime = 0;
 	}
 	
 	private void initClientState()
 	{
 		state = Global.STATE_WAITING;
-		throttlePercentage = Global.DEFAULT_THROTTLE;
+		throttle = Global.DEFAULT_THROTTLE;
 		pendingJobs = 1000;
 		cpuUtilization = 0;
+		jobTime = 0;
 	}
 
 	
@@ -55,6 +67,15 @@ public class StateInfo implements Serializable
 		pendingJobs = jobs;
 	}
 	
+	public int getThrottle()
+	{
+		return throttle;
+	}
+	
+	public void setThrottle(int t)
+	{
+		throttle = t;
+	}
 
 	public int getCpuUtilization()
 	{
@@ -66,5 +87,20 @@ public class StateInfo implements Serializable
 		cpuUtilization = cpu;
 	}
 	
+	public void setJobTime(int time)
+	{
+		jobTime = time;
+	}
+	
+	public int getJobTime()
+	{
+		return jobTime;
+	}
+	
+	public long calculateTotalTime()
+	{
+		long num = (jobTime * pendingJobs)/throttle;
+		return num;
+	}
 	
 }

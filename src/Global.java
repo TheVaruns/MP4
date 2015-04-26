@@ -2,7 +2,8 @@ public class Global
 {
 	public static final int 	TIMER_DELAY = 1000,
 			
-								PORT_STATE = 4321,
+								PORT_STC = 4321,
+								PORT_CTS = 6543,
 								PORT_TRANSFER = 8765,
 								
 								DEFAULT_THROTTLE = 50,
@@ -37,11 +38,11 @@ public class Global
 	
 	public static final int LOOP_SIZE = 10000;
 
+	public static final int THRESHOLD_JOBS = 5;
 
-	public static final int JOB_DIFFERENCE = 0;
+	public static final int TEST_CASES = 50;
 
-
-	public static final int THRESHOLD_FACTOR = 100;
+	public static final int IGNORE_CASES = 10;
 	
 	public static HardwareMonitor hardwareMonitor;
 								

@@ -26,7 +26,11 @@ public class TransferManager
 	{
 		if(!isEmptyJobQueue())
 			communicator.sendTransfer(jobQueue.remove());
-		else System.out.println("Requesting jobs from an empty queue.");
+		else 
+		{
+			System.out.println("Requesting jobs from an empty queue.");
+			sendNull();
+		}
 	}
 	
 	public void addJob(Job job)

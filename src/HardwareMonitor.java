@@ -2,10 +2,12 @@
 public class HardwareMonitor 
 {
 	int throttle;
+	StateManager sm;
 	
-	public HardwareMonitor()
+	public HardwareMonitor(StateManager sm)
 	{
 		throttle = Global.DEFAULT_THROTTLE;
+		this.sm = sm;
 	}
 	
 	public int getThrottle()
@@ -16,5 +18,6 @@ public class HardwareMonitor
 	public void setThrottle(int t)
 	{
 		throttle = t;
+		sm.getLocalState().setThrottle(throttle);
 	}
 }

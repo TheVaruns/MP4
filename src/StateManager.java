@@ -55,7 +55,7 @@ public class StateManager
 		local.setState(state);
 		
 		//	Whenever a state is updated, let the remote system know.
-		communicator.sendState();
+		//communicator.sendState(server);
 	}
 	
 	
