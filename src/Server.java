@@ -45,6 +45,9 @@ class Server extends Communicator
     	Thread thread = null;
     	int time = 0;
     	
+    	System.out.println("SERVER: \n");
+    	
+    	
     	//	Loop indefinitely
         while(true)
         {	
@@ -74,9 +77,7 @@ class Server extends Communicator
         		}
         		else
         		{
-        			//	Add job to queue
-        			System.out.println("Job received: [" + job.getId() + ", " + job.getData(0) + "]");
-        			
+        			//	Add job to queue        			
         			
         			transferManager.addJob(job);
 	        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
@@ -93,7 +94,7 @@ class Server extends Communicator
         		
         		break;
         	case Global.STATE_AGGREGATING:
-        		
+        		System.exit(0);
         		
         		break;
         	case Global.STATE_DONE:

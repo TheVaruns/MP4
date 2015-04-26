@@ -9,6 +9,7 @@ public class WorkerThread implements Runnable
 		this.tm = tm;
 		this.job = job;
 		this.throttle = throttle;
+		Global.jobs++;
 	}
 	
 	@Override
@@ -56,8 +57,6 @@ public class WorkerThread implements Runnable
 		sleepTime = System.nanoTime() - startTime - workTime;
 		
 		tm.addFinishedJob(job);
-		
-		//System.out.println("Job " + job.getId() + ": [" + (double)sleepTime/workTime + "]\n");
 	}
 
 }

@@ -8,8 +8,8 @@ public class Global
 								
 								DEFAULT_THROTTLE = 50,
 								
-								JOB_SIZE = 500,
-								INIT_JOBS = 1000;
+								JOB_SIZE = 1024*32,
+								INIT_JOBS = 1024;
 	
 
 	public static final String 	IP_ADDRESS = "localhost"; 
@@ -36,15 +36,18 @@ public class Global
 
 	
 	
-	public static final int LOOP_SIZE = 10000;
+	public static final int LOOP_SIZE = 1000;
 
-	public static final int THRESHOLD_JOBS = 5;
+	//public static final int THRESHOLD_JOBS = 20;
 
 	public static final int TEST_CASES = 50;
 
 	public static final int IGNORE_CASES = 10;
 	
 	public static HardwareMonitor hardwareMonitor;
+
+
+	public static int jobs = 0;
 								
 							
 }

@@ -40,7 +40,9 @@ class Client extends Communicator//CLOSE YOUR SOCKET - NO
 		int transferredJobs = 0;
 		Thread thread = null;
 		int time = 0;
-		
+
+    	System.out.println("CLIENT: \n");
+    	
 		while(true)
 		{		 
 			int currentState = stateManager.getState();
@@ -74,8 +76,6 @@ class Client extends Communicator//CLOSE YOUR SOCKET - NO
         		//	Wait for response
         		stateManager.updateRemoteState((StateInfo)inFromServer.readObject());
 
-        		System.out.println("Server State: " + stateManager.getRemoteState().getJobs());
-
         		//	If server is ready for bootstrap, begin bootstrapping
         		if(stateManager.getRemoteState().getState() == Global.STATE_WORKING)
         		{
@@ -91,6 +91,7 @@ class Client extends Communicator//CLOSE YOUR SOCKET - NO
         		
         		break;
         	case Global.STATE_AGGREGATING:
+        		System.exit(0);
         		return;
         		
         		//break;

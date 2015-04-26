@@ -99,8 +99,8 @@ public class StateInfo implements Serializable
 	
 	public long calculateTotalTime()
 	{
-		long num = (jobTime * pendingJobs)/throttle;
-		return num;
+		double time = jobTime/1000000;
+		return (long) ((time * pendingJobs)/throttle);
 	}
 	
 }

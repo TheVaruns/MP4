@@ -77,30 +77,30 @@ public abstract class Communicator
 			else if(stateManager.getRemoteState().getJobs() == 0)
 			{
     			stateManager.setState(Global.STATE_AGGREGATING);
+    			System.out.println("Jobs: " + Global.jobs);
     			System.out.println("Time: " + (int)(System.currentTimeMillis()-time) + " ms");
 			}
 		}
 		
 		//	Exchange state information
 		sendState(server);
-		//System.out.println("State request.");
 		stateManager.updateRemoteState((StateInfo)inFromState.readObject());
-		//System.out.println("State received.");
 
 		//	Check for job transfers
 
 		long localTime = stateManager.getLocalState().calculateTotalTime();
 		long remoteTime = stateManager.getRemoteState().calculateTotalTime();
-		int localNumJobs = stateManager.getLocalState().getJobs();
-		int remoteNumJobs = stateManager.getRemoteState().getJobs();
+		boolean throttleChanged = stateManager.checkThrottleChange();
 		
 		//	If I should transfer jobs
-		if(localTime > Global.THRESHOLD_JOBS*localNumJobs + remoteTime && localNumJobs > Global.THRESHOLD_JOBS*2)
+		if(localTime > remoteTime && throttleChanged)
 		{
-			System.out.println("Transferring " + Global.THRESHOLD_JOBS + " jobs.");
+			int k = stateManager.getNumJobstoTransfer();
+			
+			System.out.println("Transferring " + k + " jobs.");
 			int jobsSent = 0;
-			while(jobsSent < Global.THRESHOLD_JOBS)
-			{
+			while(jobsSent < k)
+			{								
 				if(stateManager.getLocalState().getJobs() == 0) break;
 				jobsSent++;
 				
@@ -108,38 +108,32 @@ public abstract class Communicator
         		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
 
     			//	Wait for response
-    			//System.out.println("Waiting for response.");
         		stateManager.updateRemoteState((StateInfo)inFromState.readObject());
-    			//System.out.println("Response received.");
 
 			}
 			
 			transferManager.sendNull();
 		}
 		//	If I should receive jobs
-		else if(remoteTime > Global.THRESHOLD_JOBS*remoteNumJobs + localTime && remoteNumJobs > Global.THRESHOLD_JOBS*2)
+		else if(localTime < remoteTime && throttleChanged)
 		{
-			System.out.println("Receiving " + Global.THRESHOLD_JOBS + " jobs.");
+			System.out.println("Receiving jobs.");
 			boolean transferring = true;
 			
 			while(transferring)
 			{
 				//	Listen for new job
-    			//System.out.println("Waiting for job.");
         		Job job1 = (Job)inFromTransfer.readObject();
         		
         		//	If client bootstrapping phase is done
         		if(job1 == null) transferring = false;
         		else
         		{          
-        			//System.out.println("Job " + job1.getId() + " received.");
         			//	Add job
         			transferManager.addJob(job1);
 	        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
 	        		
 	        		//	Let client know job was received.
-
-        			//System.out.println("Sending state.");
 	        		this.sendState(server);
         		}
 			}
