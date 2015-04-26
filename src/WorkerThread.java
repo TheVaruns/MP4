@@ -16,6 +16,7 @@ public class WorkerThread implements Runnable
 	{
 		long startTime = System.nanoTime();
 		long workTime = 0;
+		long sleepTime = 0;
 		
 		for(int i = 0; i < Global.JOB_SIZE; i++)
 		{
@@ -26,13 +27,25 @@ public class WorkerThread implements Runnable
 		}
 		
 		workTime = System.nanoTime() - startTime;
+		//System.out.println("Worktime: " + workTime);
 		int workTimeMs = (int) (workTime/1000000);
 		int workTimeNs = (int) (workTime%1000000);
+		//System.out.println("  Worktime Breakdown: " + workTimeMs + ", "+ workTimeNs);
 		
 		double factor = (100 / (double)throttle) - 1;
+		//System.out.println("Throttle: " + throttle);
+		//System.out.println("  Factor: " + factor);
 		
 		int sleepTimeMs = (int) (workTimeMs*factor);
-		int sleepTimeNs = (int) (workTimeMs*factor);
+		int sleepTimeNs = (int) (workTimeNs*factor);
+		
+		while(sleepTimeNs > 1000000)
+		{
+			sleepTimeNs -= 1000000;
+			sleepTimeMs += 1;
+		}
+		
+		//System.out.println("Sleep Time Breakdown: " + sleepTimeMs + ", "+ sleepTimeNs);
 		
 		try {
 			Thread.sleep(sleepTimeMs, sleepTimeNs);
@@ -40,9 +53,11 @@ public class WorkerThread implements Runnable
 			e.printStackTrace();
 		}
 		
+		sleepTime = System.nanoTime() - startTime - workTime;
+		
 		tm.addFinishedJob(job);
 		
-		System.out.println("Job " + job.getId() + " finished in: " + workTime);
+		//System.out.println("Job " + job.getId() + ": [" + (double)sleepTime/workTime + "]\n");
 	}
 
 }

@@ -7,7 +7,7 @@ public class Global
 								
 								DEFAULT_THROTTLE = 50,
 								
-								JOB_SIZE = 50,
+								JOB_SIZE = 500,
 								INIT_JOBS = 1000;
 	
 
@@ -35,7 +35,7 @@ public class Global
 
 	
 	
-	public static final int LOOP_SIZE = 2000;
+	public static final int LOOP_SIZE = 10000;
 
 
 	public static final int JOB_DIFFERENCE = 0;

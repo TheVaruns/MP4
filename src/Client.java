@@ -31,7 +31,6 @@ class Client implements Communicator//CLOSE YOUR SOCKET
 	{
 		for(int i = 0; i < Global.INIT_JOBS; i++)
 		{
-			
 			double[] data = new double[Global.JOB_SIZE];
 			
 			for(int j = 0; j < Global.JOB_SIZE; j++)
