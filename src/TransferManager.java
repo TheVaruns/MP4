@@ -58,7 +58,8 @@ public class TransferManager
 	public void transferFinishedJob()
 	{
 		if(!isEmptyFinishedQueue())
-			communicator.sendTransfer(jobQueue.remove());
+			communicator.sendTransfer(finishedQueue.remove());
+		else System.out.println("Queue be empts");
 	}
 	
 	public void addFinishedJob(Job job)
@@ -71,10 +72,22 @@ public class TransferManager
 		return finishedQueue.isEmpty();
 	}
 
+	public int getNumFinishedJobs()
+	{
+		return finishedQueue.size();
+	}
 	
 	public void sendNull()
 	{
 		communicator.sendTransfer(null);
+	}
+
+
+	public void displayFinishedResults() {
+		for(int i = 0; i < finishedQueue.size(); i++)
+		{
+			System.out.println(finishedQueue.get(i).data[0]);
+		}
 	}
 	
 }

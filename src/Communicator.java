@@ -50,8 +50,10 @@ public abstract class Communicator
 		try {
 			outToTransfer.writeObject(job);
 			outToTransfer.reset();
+			if(job != null)
+				System.out.println("Job transferred: id[" + job.getId() + "]");
 		}
-		catch(Exception e){
+		catch(IOException e){
 			System.out.println("Could not send job.");
 		}
 	}
@@ -66,7 +68,7 @@ public abstract class Communicator
 			if(!transferManager.isEmptyJobQueue())
 			{
         		WorkerThread workerThread = 
-        				new WorkerThread(transferManager, transferManager.getJob(),
+        				new WorkerThread(transferManager, stateManager, transferManager.getJob(),
         									Global.hardwareMonitor.getThrottle());
         		thread = new Thread(workerThread);
         		thread.start();
@@ -123,7 +125,7 @@ public abstract class Communicator
 			while(transferring)
 			{
 				//	Listen for new job
-        		Job job1 = (Job)inFromTransfer.readObject();
+        		Job job1 = getJobFromTransfer(inFromTransfer);
         		
         		//	If client bootstrapping phase is done
         		if(job1 == null) transferring = false;
@@ -174,6 +176,27 @@ public abstract class Communicator
     	int newState = stateManager.getState();
     	
     	if(newState != currentState)
+    	{
+    		System.out.println("CPU: " + stateManager.getLocalState().getCpuUtilization());
     		System.out.println(Global.STATES[currentState] + " -> " + Global.STATES[newState]);
+    	}
+	}
+	
+	protected Job getJobFromTransfer(ObjectInputStream inFromTransfer)
+	{
+		Job job;
+		try {
+			job = (Job)inFromTransfer.readObject();
+			if(job != null) System.out.println("Job received: id[" + job.getId() + "]");
+			return job;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 }

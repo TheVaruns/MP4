@@ -65,7 +65,7 @@ class Server extends Communicator
         	case Global.STATE_BOOTSTRAPPING:
         		
         		//	Listen for new job
-        		Job job = (Job)inFromTransfer.readObject();
+        		Job job = getJobFromTransfer(inFromTransfer);
         		
         		//	If client bootstrapping phase is done
         		if(job == null)
@@ -77,7 +77,7 @@ class Server extends Communicator
         		}
         		else
         		{
-        			//	Add job to queue        			
+        			//	Add job to queue        
         			
         			transferManager.addJob(job);
 	        		stateManager.getLocalState().setJobs(transferManager.getNumJobs());
@@ -94,8 +94,29 @@ class Server extends Communicator
         		
         		break;
         	case Global.STATE_AGGREGATING:
-        		System.exit(0);
+        		//	Send job
         		
+        		if(stateManager.getLocalState().getFinishedJobs() > 0)
+        		{
+        			transferManager.transferFinishedJob();
+        			stateManager.getLocalState().setFinishedJobs(transferManager.getNumFinishedJobs());
+        		}
+        		else
+        		{
+        			transferManager.sendNull();
+        		}
+        		
+        		//System.out.println("  Waiting for client response");
+        		//	Wait for response
+        		stateManager.updateRemoteState((StateInfo)inFromClient.readObject());
+        		//System.out.println("  Received for client response");
+        		
+        		//	If client is ready for done, begin doneing
+        		if(stateManager.getRemoteState().getState() == Global.STATE_DONE)
+        		{
+        			time = (int) System.currentTimeMillis();
+        			stateManager.setState(Global.STATE_DONE);
+        		}
         		break;
         	case Global.STATE_DONE:
         		System.out.println("Server: Job complete!");

@@ -57,9 +57,6 @@ public class StateManager
 	public void setState(int state)
 	{
 		local.setState(state);
-		
-		//	Whenever a state is updated, let the remote system know.
-		//communicator.sendState(server);
 	}
 
 	public boolean checkThrottleChange() 

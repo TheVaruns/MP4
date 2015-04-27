@@ -28,6 +28,7 @@ public class CommThread implements Runnable
 				new Client(ip);
 			} catch (Exception e) {
 				System.out.println("Server not available on " + ip);
+				e.printStackTrace();
 			}
 		}
 	}

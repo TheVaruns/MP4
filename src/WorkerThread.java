@@ -1,15 +1,23 @@
+import javax.management.InstanceNotFoundException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ReflectionException;
+
 public class WorkerThread implements Runnable 
 {
 	int throttle;
 	TransferManager tm;
+	StateManager sm;
 	Job job;
 	
-	public WorkerThread(TransferManager tm, Job job, int throttle)
+	public WorkerThread(TransferManager tm, StateManager sm,
+			Job job, int throttle)
 	{
 		this.tm = tm;
+		this.sm = sm;
 		this.job = job;
 		this.throttle = throttle;
 		Global.jobs++;
+		System.out.println("Processed Jobs: " + Global.jobs);
 	}
 	
 	@Override
@@ -56,7 +64,23 @@ public class WorkerThread implements Runnable
 		
 		sleepTime = System.nanoTime() - startTime - workTime;
 		
+		try {
+			sm.getLocalState().setCpuUtilization(HardwareMonitor.getProcessCpuLoad());
+		} catch (MalformedObjectNameException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InstanceNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ReflectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("CPU: "+ sm.getLocalState().getCpuUtilization());
+		
 		tm.addFinishedJob(job);
+		sm.getLocalState().setFinishedJobs(tm.getNumFinishedJobs());
 	}
 
 }
